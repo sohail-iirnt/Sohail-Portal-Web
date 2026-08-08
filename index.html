@@ -656,7 +656,7 @@
          ========================================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // FIREBASE INITIALIZATION
@@ -672,6 +672,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // Keep authentication persistent across refreshes, phones, and laptops.
+        // This does NOT prevent a real Sign Out; it only remembers a successful login.
+        setPersistence(auth, browserLocalPersistence).catch(err => {
+            console.error("Firebase Auth persistence error:", err);
+        });
 
         enableIndexedDbPersistence(db).catch(err => console.log("Offline Persistence Status:", err.code));
 
@@ -741,20 +747,93 @@
 
         // --- 3. AUTHENTICATION MODULE ---
         const googleProvider = new GoogleAuthProvider();
+
+        function authErrorMessage(err) {
+            const code = err?.code || '';
+            const messages = {
+                'auth/invalid-credential': 'Invalid email or password.',
+                'auth/invalid-login-credentials': 'Invalid email or password.',
+                'auth/user-not-found': 'No account exists with this email.',
+                'auth/wrong-password': 'Incorrect password.',
+                'auth/invalid-email': 'Please enter a valid email address.',
+                'auth/user-disabled': 'This account has been disabled.',
+                'auth/too-many-requests': 'Too many login attempts. Please wait and try again.',
+                'auth/network-request-failed': 'Network error. Check your internet connection.',
+                'auth/popup-blocked': 'Google login popup was blocked. Please allow popups and try again.',
+                'auth/popup-closed-by-user': 'Google login was cancelled.',
+                'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase Authentication.',
+                'auth/unauthorized-domain': 'This website domain is not authorized in Firebase Authentication.',
+                'auth/invalid-api-key': 'Firebase API key is invalid or misconfigured.',
+                'auth/app-not-authorized': 'This app/domain is not authorized for Firebase Authentication.'
+            };
+            return messages[code] || err?.message || 'Authentication failed. Please try again.';
+        }
+
         const Auth = {
-            googleLogin: async () => { try { await signInWithPopup(auth, googleProvider); } catch(e) { Toast.show(e.message, "error"); } },
+            googleLogin: async () => {
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+                    // Redirect is more reliable on mobile browsers; popup remains convenient on desktop.
+                    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isMobile) await signInWithRedirect(auth, googleProvider);
+                    else await signInWithPopup(auth, googleProvider);
+                } catch(e) {
+                    console.error('Google login error:', e);
+                    Toast.show(authErrorMessage(e), 'error');
+                }
+            },
             emailLogin: async () => {
-                const e = document.getElementById('authEmail').value, p = document.getElementById('authPass').value;
-                if(!e || !p) return Toast.show("Enter email and password", "error");
-                try { await signInWithEmailAndPassword(auth, e, p); } catch(err) { Toast.show(err.message, "error"); }
+                const emailEl = document.getElementById('authEmail');
+                const passEl = document.getElementById('authPass');
+                const e = emailEl?.value?.trim() || '';
+                const p = passEl?.value || '';
+                if(!e || !p) return Toast.show('Enter email and password', 'error');
+
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+                    await signInWithEmailAndPassword(auth, e, p);
+                    Toast.show('Login successful');
+                } catch(err) {
+                    console.error('Email login error:', err);
+                    Toast.show(authErrorMessage(err), 'error');
+                }
             },
             emailSignup: async () => {
-                const e = document.getElementById('authEmail').value, p = document.getElementById('authPass').value;
-                if(!e || !p) return Toast.show("Enter email and password", "error");
-                try { await createUserWithEmailAndPassword(auth, e, p); } catch(err) { Toast.show(err.message, "error"); }
+                const e = document.getElementById('authEmail')?.value?.trim() || '';
+                const p = document.getElementById('authPass')?.value || '';
+                if(!e || !p) return Toast.show('Enter email and password', 'error');
+                if(p.length < 6) return Toast.show('Password must be at least 6 characters.', 'error');
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+                    await createUserWithEmailAndPassword(auth, e, p);
+                    Toast.show('Account created successfully');
+                } catch(err) {
+                    console.error('Signup error:', err);
+                    Toast.show(authErrorMessage(err), 'error');
+                }
             },
-            logout: () => { signOut(auth); }
+            logout: async () => {
+                try {
+                    await signOut(auth);
+                    window.SohailPortal.uid = null;
+                    window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} };
+                    Toast.show('Signed out successfully');
+                } catch(err) {
+                    console.error('Logout error:', err);
+                    Toast.show(authErrorMessage(err), 'error');
+                }
+            }
         };
+
+        // Complete Google redirect login when returning from accounts.google.com.
+        getRedirectResult(auth).then(result => {
+            if (result?.user) console.log('Google redirect login completed:', result.user.uid);
+        }).catch(err => {
+            if (err?.code) {
+                console.error('Google redirect result error:', err);
+                Toast.show(authErrorMessage(err), 'error');
+            }
+        });
 
         // --- 4. FIREBASE REAL-TIME SYNC ENGINE ---
         // Robust Firestore synchronization. Each listener has its own error handler,
@@ -866,6 +945,41 @@
             syncCollection("salaries", "salaries", () => window.Finance && window.Finance.render(), 'Salaries');
             syncCollection("expenses", "expenses", () => window.Finance && window.Finance.render(), 'Expenses');
         }
+
+        // --- 4B. AUTH STATE CONTROLLER ---
+        // Firebase may restore an existing session asynchronously. This listener is the
+        // single source of truth for showing the app/login screen and starting/stopping
+        // Firestore listeners.
+        let authStateInitialized = false;
+        onAuthStateChanged(auth, (user) => {
+            // Always remove listeners from the previous session first.
+            window.SohailPortal.unsubscribes.forEach(unsub => {
+                try { if (typeof unsub === 'function') unsub(); } catch (_) {}
+            });
+            window.SohailPortal.unsubscribes = [];
+
+            if (user) {
+                window.SohailPortal.uid = user.uid;
+                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} };
+                SafeDOM.setDisplay('authOverlay', 'none');
+                SafeDOM.setDisplay('mainApp', 'flex');
+                initRealtimeSync();
+                console.log('[Auth] Signed in:', user.uid, user.email || user.displayName || 'Google user');
+                if (authStateInitialized) Toast.show('Connected to Firebase Cloud');
+            } else {
+                window.SohailPortal.uid = null;
+                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} };
+                SafeDOM.setDisplay('authOverlay', 'flex');
+                SafeDOM.setDisplay('mainApp', 'none');
+                console.log('[Auth] Signed out');
+            }
+            authStateInitialized = true;
+        }, (error) => {
+            console.error('[Auth] State listener error:', error);
+            SafeDOM.setDisplay('authOverlay', 'flex');
+            SafeDOM.setDisplay('mainApp', 'none');
+            Toast.show(authErrorMessage(error), 'error');
+        });
 
         // --- 5. THEME CONTROLLER ---
         const Theme = {
