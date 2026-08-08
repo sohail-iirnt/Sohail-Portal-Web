@@ -275,7 +275,11 @@
             .table-controls { flex-direction: column; align-items: stretch; }
             .search-box { width: 100%; max-width: none; }
         }
-    </style>
+    
+/* ================= PERSONAL OS EXTENSION ================= */
+.os-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem}.os-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:16px;padding:1.15rem;box-shadow:var(--shadow-glass)}.os-card h3{margin:0 0 .65rem;font-size:1rem}.os-kpi{font-size:1.65rem;font-weight:800;color:var(--accent-primary)}.os-muted{color:var(--text-muted);font-size:.82rem}.os-progress{height:8px;background:rgba(255,255,255,.07);border-radius:20px;overflow:hidden;margin:.55rem 0}.os-progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent-secondary),var(--accent-primary));border-radius:20px}.os-toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}.os-toolbar input,.os-toolbar select,.os-form input,.os-form select,.os-form textarea{width:100%;box-sizing:border-box}.os-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem}.os-form .full{grid-column:1/-1}.os-actions{display:flex;gap:.45rem;flex-wrap:wrap}.os-tag{display:inline-flex;align-items:center;padding:.25rem .55rem;border-radius:999px;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.18);font-size:.72rem}.os-danger{color:var(--danger)}.os-success{color:var(--success)}.os-warning{color:var(--warning)}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal-head{text-align:center;color:var(--text-muted);font-size:.72rem;font-weight:800;padding:.4rem}.cal-day{min-height:105px;border:1px solid var(--border-glass);border-radius:10px;padding:.45rem;background:rgba(255,255,255,.015);cursor:pointer;overflow:hidden}.cal-day:hover{border-color:var(--accent-primary)}.cal-day.today{box-shadow:inset 0 0 0 1px var(--accent-primary)}.cal-day.muted{opacity:.35}.cal-date{font-weight:800;font-size:.8rem;margin-bottom:.3rem}.cal-event{font-size:.68rem;padding:.18rem .3rem;margin:.15rem 0;border-radius:5px;background:rgba(0,240,255,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-event.goal{background:rgba(177,0,255,.12)}.cal-event.expense{background:rgba(255,51,102,.10)}.cal-event.project{background:rgba(0,230,118,.10)}.cal-event.journal{background:rgba(255,179,0,.10)}.cal-event.att{background:rgba(0,240,255,.10)}.os-table{width:100%;border-collapse:collapse}.os-table th,.os-table td{padding:.65rem;border-bottom:1px solid var(--border-glass);text-align:left;font-size:.82rem}.os-table th{color:var(--text-muted);font-size:.7rem;text-transform:uppercase}.empty-state{text-align:center;padding:2rem;color:var(--text-muted)}.record-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem}.record-card{padding:1rem;border:1px solid var(--border-glass);border-radius:14px;background:rgba(255,255,255,.02)}.record-card .icon{font-size:1.4rem;color:var(--accent-primary);margin-bottom:.5rem}.record-card .value{font-size:1.25rem;font-weight:800}.record-card .label{font-size:.78rem;color:var(--text-muted)}.journal-entry{border-left:3px solid var(--accent-primary);padding:.7rem 1rem;background:rgba(255,255,255,.02);border-radius:0 10px 10px 0;margin-bottom:.7rem}.journal-entry h4{margin:0 0 .35rem}.month-switch{display:flex;align-items:center;gap:.5rem;justify-content:center}.month-switch strong{min-width:145px;text-align:center}.money-positive{color:var(--success);font-weight:800}.money-negative{color:var(--danger);font-weight:800}@media(max-width:700px){.calendar-grid{gap:3px}.cal-day{min-height:78px;padding:.3rem}.cal-event{font-size:.6rem}.os-card{padding:.9rem}}
+
+</style>
 </head>
 <body>
 
@@ -352,6 +356,14 @@
                 <button class="nav-btn" onclick="window.UI.switchTab('attendance')"><i class="fa-solid fa-user-clock"></i> Attendance Log</button>
                 <button class="nav-btn" onclick="window.UI.switchTab('finance')"><i class="fa-solid fa-wallet"></i> Finance & Salary</button>
                 <button class="nav-btn" onclick="window.UI.switchTab('analytics')"><i class="fa-solid fa-chart-pie"></i> Analytics</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('goals')"><i class="fa-solid fa-bullseye"></i> Goals & Targets</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('expenseIntel')"><i class="fa-solid fa-money-bill-trend-up"></i> Expense Intelligence</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('calendar')"><i class="fa-solid fa-calendar-days"></i> Calendar View</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('records')"><i class="fa-solid fa-trophy"></i> Personal Records</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('ideas')"><i class="fa-solid fa-lightbulb"></i> Idea Vault</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('projects')"><i class="fa-solid fa-rocket"></i> Project Command</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('journal')"><i class="fa-solid fa-book-open"></i> Daily Journal</button>
+                <button class="nav-btn" onclick="window.UI.switchTab('networth')"><i class="fa-solid fa-chart-line"></i> Net Worth</button>
                 <button class="nav-btn" onclick="window.UI.switchTab('scratchpad')"><i class="fa-solid fa-terminal"></i> Dev Scratchpad</button>
                 <button class="nav-btn" onclick="window.UI.switchTab('settings')" style="margin-top: 10px; border-top: 1px solid var(--border-glass); border-radius:0;"><i class="fa-solid fa-sliders"></i> System Settings</button>
                 <button class="nav-btn" onclick="window.Auth.logout()" style="color: var(--danger);"><i class="fa-solid fa-power-off"></i> Sign Out</button>
@@ -566,7 +578,7 @@
                             <div class="input-group" style="margin-bottom:10px;"><label>Date</label><input type="text" id="expDate" placeholder="Select Date..."></div>
                             <div class="input-group" style="margin-bottom:10px;"><label>Category</label><input type="text" id="expCat" placeholder="E.g., Server Hosting, Travel"></div>
                             <div class="input-group" style="margin-bottom:10px;"><label>Amount (₹)</label><input type="number" id="expAmt" placeholder="E.g., 1500"></div>
-                            <div class="input-group" style="margin-bottom:15px;"><label>Remark</label><input type="text" id="expRemark" placeholder="Details..."></div>
+                            <div class="input-group" style="margin-bottom:15px;"><label>Remark</label><input type="text" id="expRemark" placeholder="Details..."></div><label style="display:flex;align-items:center;gap:.5rem;margin-bottom:15px;cursor:pointer;"><input type="checkbox" id="expRecurring" style="width:auto;"> Mark as recurring</label>
                             <button class="btn btn-danger" style="width:100%; background:var(--danger);" onclick="window.Finance.saveExpense()"><i class="fa-solid fa-cloud-arrow-up"></i> Sync Expense</button>
                         </div>
                     </div>
@@ -590,6 +602,59 @@
                             </table>
                         </div>
                     </div>
+                </section>
+
+
+                <!-- PERSONAL OS MODULES -->
+                <section id="goals" class="module-section">
+                    <div class="section-header"><h2>Goals & Targets</h2><span class="badge p">Personal Growth System</span></div>
+                    <div class="os-grid"><div class="os-card"><h3>Active Goals</h3><div class="os-kpi" id="goalActiveKpi">0</div><div class="os-muted">Goals currently in progress</div></div><div class="os-card"><h3>Completed</h3><div class="os-kpi" id="goalDoneKpi">0</div><div class="os-muted">Completed goals</div></div><div class="os-card"><h3>Average Progress</h3><div class="os-kpi" id="goalProgressKpi">0%</div><div class="os-muted">Across active goals</div></div></div>
+                    <div class="panel"><div class="panel-title"><i class="fa-solid fa-plus"></i> Create Goal</div><div class="os-form"><div class="input-group"><label>Goal</label><input id="goalTitle" placeholder="e.g. Complete Flutter project"></div><div class="input-group"><label>Category</label><select id="goalCategory"><option>Career</option><option>Business</option><option>Learning</option><option>Finance</option><option>Personal</option><option>Health</option><option>Other</option></select></div><div class="input-group"><label>Target Date</label><input id="goalDate" type="date"></div><div class="input-group"><label>Priority</label><select id="goalPriority"><option>High</option><option selected>Medium</option><option>Low</option></select></div><div class="input-group"><label>Progress %</label><input id="goalProgress" type="number" min="0" max="100" value="0"></div><div class="input-group"><label>Target / Metric</label><input id="goalTarget" placeholder="e.g. 20 tasks, ₹50,000"></div><div class="input-group full"><label>Notes</label><textarea id="goalNotes" rows="2" placeholder="Milestones or details..."></textarea></div><div class="os-actions full"><button class="btn" onclick="window.PersonalOS.saveGoal()"><i class="fa-solid fa-cloud-arrow-up"></i> Save Goal</button></div></div></div>
+                    <div class="panel"><div class="panel-title">My Goals</div><div id="goalsList"></div></div>
+                </section>
+
+                <section id="expenseIntel" class="module-section">
+                    <div class="section-header"><h2>Expense Intelligence</h2><span class="badge p">Derived from your existing Finance logs</span></div>
+                    <div class="os-grid"><div class="os-card"><h3>This Month</h3><div class="os-kpi" id="eiMonth">₹0</div><div class="os-muted">Total expenses</div></div><div class="os-card"><h3>Average / Expense</h3><div class="os-kpi" id="eiAvg">₹0</div><div class="os-muted">Average transaction</div></div><div class="os-card"><h3>Top Category</h3><div class="os-kpi" id="eiTop">—</div><div class="os-muted" id="eiTopAmt">₹0</div></div><div class="os-card"><h3>Recurring Commitments</h3><div class="os-kpi" id="eiRecurring">₹0</div><div class="os-muted">Manually marked recurring expenses</div></div></div>
+                    <div class="panel"><div class="panel-title">Category Intelligence</div><div id="expenseCategoryList"></div></div>
+                    <div class="panel"><div class="panel-title">Monthly Spending Trend</div><div class="chart-container" style="height:280px"><canvas id="expenseTrendChart"></canvas></div></div>
+                </section>
+
+                <section id="calendar" class="module-section">
+                    <div class="section-header"><h2>Calendar View</h2><div class="month-switch"><button class="page-btn" onclick="window.PersonalOS.calendarPrev()"><i class="fa-solid fa-chevron-left"></i></button><strong id="calendarMonthLabel"></strong><button class="page-btn" onclick="window.PersonalOS.calendarNext()"><i class="fa-solid fa-chevron-right"></i></button><button class="btn btn-outline" onclick="window.PersonalOS.calendarToday()">Today</button></div></div>
+                    <div class="panel"><div class="calendar-grid" id="calendarGrid"></div></div>
+                    <div class="panel"><div class="panel-title">Selected Day</div><div id="calendarDetails" class="os-muted">Select a date to see everything recorded on that day.</div></div>
+                </section>
+
+                <section id="records" class="module-section">
+                    <div class="section-header"><h2>Personal Records</h2><span class="badge p">Automatically calculated</span></div>
+                    <div class="record-grid" id="recordsGrid"></div>
+                    <div class="panel"><div class="panel-title">Your Numbers</div><div class="os-grid" id="recordsSummary"></div></div>
+                </section>
+
+                <section id="ideas" class="module-section">
+                    <div class="section-header"><h2>Idea Vault</h2><span class="badge p">Capture • Develop • Launch</span></div>
+                    <div class="panel"><div class="panel-title"><i class="fa-solid fa-lightbulb"></i> Capture an Idea</div><div class="os-form"><div class="input-group"><label>Title</label><input id="ideaTitle" placeholder="Your idea..."></div><div class="input-group"><label>Category</label><select id="ideaCategory"><option>Startup</option><option>App</option><option>Website</option><option>Robotics</option><option>Content</option><option>Education</option><option>Business</option><option>Other</option></select></div><div class="input-group"><label>Status</label><select id="ideaStatus"><option>Idea</option><option>Researching</option><option>Building</option><option>Launched</option><option>Paused</option><option>Rejected</option></select></div><div class="input-group full"><label>Problem / Opportunity</label><textarea id="ideaProblem" rows="2"></textarea></div><div class="input-group full"><label>Solution / Notes</label><textarea id="ideaNotes" rows="3"></textarea></div><div class="os-actions full"><button class="btn" onclick="window.PersonalOS.saveIdea()"><i class="fa-solid fa-cloud-arrow-up"></i> Save Idea</button></div></div></div>
+                    <div class="panel"><div class="panel-title">Vault</div><div id="ideasList"></div></div>
+                </section>
+
+                <section id="projects" class="module-section">
+                    <div class="section-header"><h2>Project Command Center</h2><span class="badge p">Projects • Milestones • Progress</span></div>
+                    <div class="panel"><div class="panel-title"><i class="fa-solid fa-rocket"></i> New Project</div><div class="os-form"><div class="input-group"><label>Project Name</label><input id="projectTitle" placeholder="Project name"></div><div class="input-group"><label>Category</label><input id="projectCategory" placeholder="Software, Robotics, Business..."></div><div class="input-group"><label>Deadline</label><input id="projectDate" type="date"></div><div class="input-group"><label>Progress %</label><input id="projectProgress" type="number" min="0" max="100" value="0"></div><div class="input-group"><label>Budget (₹)</label><input id="projectBudget" type="number" min="0" value="0"></div><div class="input-group"><label>Status</label><select id="projectStatus"><option>Planning</option><option>Active</option><option>On Hold</option><option>Completed</option></select></div><div class="input-group full"><label>Description</label><textarea id="projectNotes" rows="2"></textarea></div><div class="os-actions full"><button class="btn" onclick="window.PersonalOS.saveProject()"><i class="fa-solid fa-cloud-arrow-up"></i> Save Project</button></div></div></div>
+                    <div class="panel"><div class="panel-title">Projects</div><div id="projectsList"></div></div>
+                </section>
+
+                <section id="journal" class="module-section">
+                    <div class="section-header"><h2>Daily Journal / Life Log</h2><span class="badge p">Private personal timeline</span></div>
+                    <div class="panel"><div class="panel-title"><i class="fa-solid fa-pen-nib"></i> Today's Entry</div><div class="os-form"><div class="input-group"><label>Date</label><input id="journalDate" type="date"></div><div class="input-group"><label>Mood</label><select id="journalMood"><option>😊 Great</option><option>🙂 Good</option><option>😐 Okay</option><option>😔 Low</option><option>🔥 Highly Productive</option></select></div><div class="input-group full"><label>Highlight</label><input id="journalHighlight" placeholder="What mattered most today?"></div><div class="input-group full"><label>What I learned</label><textarea id="journalLearned" rows="2"></textarea></div><div class="input-group full"><label>Reflection / Gratitude / Notes</label><textarea id="journalNotes" rows="4"></textarea></div><div class="os-actions full"><button class="btn" onclick="window.PersonalOS.saveJournal()"><i class="fa-solid fa-cloud-arrow-up"></i> Save Journal Entry</button></div></div></div>
+                    <div class="panel"><div class="panel-title">Life Log</div><div id="journalList"></div></div>
+                </section>
+
+                <section id="networth" class="module-section">
+                    <div class="section-header"><h2>Net Worth / Financial Snapshot</h2><span class="badge p">Personal finance snapshot</span></div>
+                    <div class="os-grid"><div class="os-card"><h3>Latest Net Worth</h3><div class="os-kpi" id="nwLatest">₹0</div><div class="os-muted" id="nwDate">No snapshot yet</div></div><div class="os-card"><h3>Assets</h3><div class="os-kpi money-positive" id="nwAssets">₹0</div><div class="os-muted">Cash + bank + investments + other</div></div><div class="os-card"><h3>Liabilities</h3><div class="os-kpi money-negative" id="nwLiabilities">₹0</div><div class="os-muted">Loans, dues and liabilities</div></div><div class="os-card"><h3>Change vs Previous</h3><div class="os-kpi" id="nwChange">₹0</div><div class="os-muted">Latest minus previous snapshot</div></div></div>
+                    <div class="panel"><div class="panel-title"><i class="fa-solid fa-plus"></i> Add Financial Snapshot</div><div class="os-form"><div class="input-group"><label>Date</label><input id="nwDateInput" type="date"></div><div class="input-group"><label>Cash (₹)</label><input id="nwCash" type="number" min="0" value="0"></div><div class="input-group"><label>Bank (₹)</label><input id="nwBank" type="number" min="0" value="0"></div><div class="input-group"><label>Investments (₹)</label><input id="nwInvest" type="number" min="0" value="0"></div><div class="input-group"><label>Other Assets (₹)</label><input id="nwOther" type="number" min="0" value="0"></div><div class="input-group"><label>Liabilities (₹)</label><input id="nwDebt" type="number" min="0" value="0"></div><div class="input-group full"><label>Notes</label><textarea id="nwNotes" rows="2"></textarea></div><div class="os-actions full"><button class="btn" onclick="window.PersonalOS.saveNetWorth()"><i class="fa-solid fa-cloud-arrow-up"></i> Save Snapshot</button></div></div></div>
+                    <div class="panel"><div class="panel-title">Snapshot History</div><div id="networthList"></div></div>
                 </section>
 
                 <!-- MODULE 5: DEV SCRATCHPAD -->
@@ -658,7 +723,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
         // FIREBASE INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyCiqUgirOB-f4kR2njHrfwutzH0fMj2KEo",
@@ -673,18 +737,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Keep authentication persistent across refreshes, phones, and laptops.
-        // This does NOT prevent a real Sign Out; it only remembers a successful login.
-        setPersistence(auth, browserLocalPersistence).catch(err => {
-            console.error("Firebase Auth persistence error:", err);
-        });
-
         enableIndexedDbPersistence(db).catch(err => console.log("Offline Persistence Status:", err.code));
 
         // GLOBAL APP STATE
         window.SohailPortal = {
             auth, db, uid: null,
-            data: { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} },
+            data: { tasks: [], attendance: [], salaries: [], expenses: [], goals: [], ideas: [], projects: [], journal: [], networth: [], settings: {} },
             unsubscribes: []
         };
 
@@ -769,6 +827,7 @@
             return messages[code] || err?.message || 'Authentication failed. Please try again.';
         }
 
+        let authBusy = false;
         const Auth = {
             googleLogin: async () => {
                 try {
@@ -824,16 +883,6 @@
                 }
             }
         };
-
-        // Complete Google redirect login when returning from accounts.google.com.
-        getRedirectResult(auth).then(result => {
-            if (result?.user) console.log('Google redirect login completed:', result.user.uid);
-        }).catch(err => {
-            if (err?.code) {
-                console.error('Google redirect result error:', err);
-                Toast.show(authErrorMessage(err), 'error');
-            }
-        });
 
         // --- 4. FIREBASE REAL-TIME SYNC ENGINE ---
         // Robust Firestore synchronization. Each listener has its own error handler,
@@ -944,6 +993,11 @@
             syncCollection("attendance_v2", "attendance", () => window.Attendance && window.Attendance.render(), 'Attendance');
             syncCollection("salaries", "salaries", () => window.Finance && window.Finance.render(), 'Salaries');
             syncCollection("expenses", "expenses", () => window.Finance && window.Finance.render(), 'Expenses');
+            syncCollection("goals", "goals", () => window.PersonalOS && window.PersonalOS.renderGoals(), 'Goals');
+            syncCollection("ideas", "ideas", () => window.PersonalOS && window.PersonalOS.renderIdeas(), 'Ideas');
+            syncCollection("projects", "projects", () => window.PersonalOS && window.PersonalOS.renderProjects(), 'Projects');
+            syncCollection("journal", "journal", () => window.PersonalOS && window.PersonalOS.renderJournal(), 'Journal');
+            syncCollection("networth", "networth", () => window.PersonalOS && window.PersonalOS.renderNetWorth(), 'Net Worth');
         }
 
         // --- 4B. AUTH STATE CONTROLLER ---
@@ -960,7 +1014,7 @@
 
             if (user) {
                 window.SohailPortal.uid = user.uid;
-                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} };
+                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], goals: [], ideas: [], projects: [], journal: [], networth: [], settings: {} };
                 SafeDOM.setDisplay('authOverlay', 'none');
                 SafeDOM.setDisplay('mainApp', 'flex');
                 initRealtimeSync();
@@ -968,7 +1022,7 @@
                 if (authStateInitialized) Toast.show('Connected to Firebase Cloud');
             } else {
                 window.SohailPortal.uid = null;
-                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], settings: {} };
+                window.SohailPortal.data = { tasks: [], attendance: [], salaries: [], expenses: [], goals: [], ideas: [], projects: [], journal: [], networth: [], settings: {} };
                 SafeDOM.setDisplay('authOverlay', 'flex');
                 SafeDOM.setDisplay('mainApp', 'none');
                 console.log('[Auth] Signed out');
@@ -1025,6 +1079,10 @@
                 if (window.event && window.event.currentTarget) window.event.currentTarget.classList.add('active');
                 if(window.innerWidth <= 900) UI.toggleSidebar();
                 if(tabId === 'analytics') window.Analytics.render();
+                if(tabId === 'expenseIntel') window.PersonalOS.renderExpenseIntel();
+                if(tabId === 'calendar') window.PersonalOS.renderCalendar();
+                if(tabId === 'records') window.PersonalOS.renderRecords();
+                if(['goals','ideas','projects','journal','networth'].includes(tabId)) window.PersonalOS.renderAll();
             }
         };
 
@@ -1541,7 +1599,7 @@
                 const uid = window.SohailPortal.uid; if(!uid) return;
                 const date = document.getElementById('expDate').value; const cat = document.getElementById('expCat').value; const amt = document.getElementById('expAmt').value; const rem = document.getElementById('expRemark').value;
                 if(!date || !cat || !amt) return Toast.show("Fill Date, Category, Amount", "error");
-                try { await setDoc(doc(db, "users", uid, "expenses", Date.now().toString()), { date, category: cat, amount: parseFloat(amt), remark: rem }); SafeDOM.setValue('expAmt', ''); SafeDOM.setValue('expRemark', ''); Toast.show("Expense Synced"); } catch(e) {}
+                try { await setDoc(doc(db, "users", uid, "expenses", Date.now().toString()), { date, category: cat, amount: parseFloat(amt), remark: rem, recurring: !!document.getElementById('expRecurring')?.checked }); SafeDOM.setValue('expAmt', ''); SafeDOM.setValue('expRemark', ''); const rc=document.getElementById('expRecurring'); if(rc) rc.checked=false; Toast.show("Expense Synced"); } catch(e) {}
             },
             render: () => {
                 try {
@@ -1571,6 +1629,7 @@
                     SafeDOM.setHTML('totalSalDisp', `₹${Core.formatNumber(tSal)}`);
                     SafeDOM.setHTML('totalExpDisp', `₹${Core.formatNumber(tExp)}`);
                     SafeDOM.setHTML('totalBalDisp', `₹${Core.formatNumber(tSal - tExp)}`);
+                    if(window.PersonalOS) window.PersonalOS.renderExpenseIntel(); window.PersonalOS.renderRecords(); window.PersonalOS.renderCalendar();
                 } catch(e) { console.error("Finance Error:", e); }
             },
             delSal: (id) => { window.Modal.open("Delete Salary", "Delete this salary log?", async () => { await deleteDoc(doc(db, "users", window.SohailPortal.uid, "salaries", id)); Toast.show("Deleted"); }); },
@@ -1620,6 +1679,49 @@
             }
         };
 
+
+        // --- PERSONAL OS: GOALS / EXPENSE INTELLIGENCE / CALENDAR / RECORDS / IDEAS / PROJECTS / JOURNAL / NET WORTH ---
+        const PersonalOS = {
+            calendarDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            expenseTrendChart: null,
+            money: n => `₹${Core.formatNumber(Number(n)||0)}`,
+            today: () => new Date().toISOString().slice(0,10),
+            esc: v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),
+            saveGoal: async () => {
+                const uid=window.SohailPortal.uid; if(!uid)return;
+                const title=document.getElementById('goalTitle')?.value.trim(); if(!title)return Toast.show('Enter a goal title','error');
+                const id=Date.now().toString(); const d={title,category:document.getElementById('goalCategory').value,deadline:document.getElementById('goalDate').value,priority:document.getElementById('goalPriority').value,progress:Math.max(0,Math.min(100,Number(document.getElementById('goalProgress').value)||0)),target:document.getElementById('goalTarget').value.trim(),notes:document.getElementById('goalNotes').value.trim(),status:'Active',createdAt:Date.now()};
+                try{await setDoc(doc(db,'users',uid,'goals',id),d);['goalTitle','goalDate','goalTarget','goalNotes'].forEach(x=>SafeDOM.setValue(x,''));SafeDOM.setValue('goalProgress','0');Toast.show('Goal saved');}catch(e){console.error(e);Toast.show('Goal save failed','error')}
+            },
+            renderGoals: () => {
+                const list=document.getElementById('goalsList'); if(!list)return; const a=[...window.SohailPortal.data.goals].sort((x,y)=>(Number(y.createdAt)||0)-(Number(x.createdAt)||0));
+                let active=0,done=0,sum=0; a.forEach(g=>{const p=Math.max(0,Math.min(100,Number(g.progress)||0));sum+=p;if(p>=100||g.status==='Completed')done++;else active++;});
+                SafeDOM.setHTML('goalActiveKpi',active);SafeDOM.setHTML('goalDoneKpi',done);SafeDOM.setHTML('goalProgressKpi',`${a.length?Math.round(sum/a.length):0}%`);
+                if(!a.length){list.innerHTML='<div class="empty-state">No goals yet. Create your first target above.</div>';return;}
+                list.innerHTML=a.map(g=>{const p=Math.max(0,Math.min(100,Number(g.progress)||0));return `<div class="os-card" style="margin-bottom:.7rem"><div style="display:flex;justify-content:space-between;gap:1rem"><div><h3>${PersonalOS.esc(g.title)}</h3><span class="os-tag">${PersonalOS.esc(g.category||'Other')}</span> <span class="os-tag">${PersonalOS.esc(g.priority||'Medium')}</span></div><div class="os-kpi">${p}%</div></div><div class="os-progress"><span style="width:${p}%"></span></div><div class="os-muted">${g.deadline?'Deadline: '+PersonalOS.esc(g.deadline):'No deadline'} ${g.target?' • Target: '+PersonalOS.esc(g.target):''}</div>${g.notes?`<div style="margin-top:.45rem;font-size:.82rem">${PersonalOS.esc(g.notes)}</div>`:''}<div class="os-actions" style="margin-top:.6rem"><button class="btn btn-outline" onclick="window.PersonalOS.bumpGoal('${g.id}',10)">+10%</button><button class="btn btn-danger" onclick="window.PersonalOS.deleteRecord('goals','${g.id}','Goal')"><i class="fa-solid fa-trash"></i></button></div></div>`}).join('');
+            },
+            bumpGoal: async(id,amount)=>{const g=window.SohailPortal.data.goals.find(x=>x.id===id);if(!g)return;const p=Math.min(100,(Number(g.progress)||0)+amount);try{await setDoc(doc(db,'users',window.SohailPortal.uid,'goals',id),{...g,progress:p,status:p>=100?'Completed':'Active'},{merge:true});}catch(e){Toast.show('Goal update failed','error')}},
+            saveIdea: async()=>{const uid=window.SohailPortal.uid;if(!uid)return;const title=document.getElementById('ideaTitle')?.value.trim();if(!title)return Toast.show('Enter an idea title','error');const id=Date.now().toString();const d={title,category:document.getElementById('ideaCategory').value,status:document.getElementById('ideaStatus').value,problem:document.getElementById('ideaProblem').value.trim(),notes:document.getElementById('ideaNotes').value.trim(),createdAt:Date.now(),date:PersonalOS.today()};try{await setDoc(doc(db,'users',uid,'ideas',id),d);['ideaTitle','ideaProblem','ideaNotes'].forEach(x=>SafeDOM.setValue(x,''));Toast.show('Idea added to Vault');}catch(e){Toast.show('Idea save failed','error')}},
+            renderIdeas:()=>{const list=document.getElementById('ideasList');if(!list)return;const a=[...window.SohailPortal.data.ideas].sort((x,y)=>(Number(y.createdAt)||0)-(Number(x.createdAt)||0));if(!a.length){list.innerHTML='<div class="empty-state">Your Idea Vault is empty.</div>';return;}list.innerHTML=a.map(i=>`<div class="os-card" style="margin-bottom:.7rem"><div style="display:flex;justify-content:space-between;gap:1rem"><div><h3>💡 ${PersonalOS.esc(i.title)}</h3><span class="os-tag">${PersonalOS.esc(i.category)}</span> <span class="os-tag">${PersonalOS.esc(i.status)}</span></div><div class="os-muted">${PersonalOS.esc(i.date||'')}</div></div>${i.problem?`<p><strong>Problem:</strong> ${PersonalOS.esc(i.problem)}</p>`:''}${i.notes?`<p class="os-muted">${PersonalOS.esc(i.notes)}</p>`:''}<div class="os-actions"><button class="btn btn-danger" onclick="window.PersonalOS.deleteRecord('ideas','${i.id}','Idea')"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')},
+            saveProject:async()=>{const uid=window.SohailPortal.uid;if(!uid)return;const title=document.getElementById('projectTitle')?.value.trim();if(!title)return Toast.show('Enter a project name','error');const id=Date.now().toString();const d={title,category:document.getElementById('projectCategory').value.trim(),deadline:document.getElementById('projectDate').value,progress:Math.max(0,Math.min(100,Number(document.getElementById('projectProgress').value)||0)),budget:Number(document.getElementById('projectBudget').value)||0,status:document.getElementById('projectStatus').value,notes:document.getElementById('projectNotes').value.trim(),createdAt:Date.now(),date:PersonalOS.today()};try{await setDoc(doc(db,'users',uid,'projects',id),d);['projectTitle','projectCategory','projectDate','projectNotes'].forEach(x=>SafeDOM.setValue(x,''));SafeDOM.setValue('projectProgress','0');SafeDOM.setValue('projectBudget','0');Toast.show('Project saved');}catch(e){Toast.show('Project save failed','error')}},
+            renderProjects:()=>{const list=document.getElementById('projectsList');if(!list)return;const a=[...window.SohailPortal.data.projects].sort((x,y)=>(Number(y.createdAt)||0)-(Number(x.createdAt)||0));if(!a.length){list.innerHTML='<div class="empty-state">No projects yet.</div>';return;}list.innerHTML=a.map(p=>{const prog=Math.max(0,Math.min(100,Number(p.progress)||0));return `<div class="os-card" style="margin-bottom:.7rem"><div style="display:flex;justify-content:space-between"><div><h3>🚀 ${PersonalOS.esc(p.title)}</h3><span class="os-tag">${PersonalOS.esc(p.category||'Project')}</span> <span class="os-tag">${PersonalOS.esc(p.status||'Planning')}</span></div><div class="os-kpi">${prog}%</div></div><div class="os-progress"><span style="width:${prog}%"></span></div><div class="os-muted">${p.deadline?'Deadline: '+PersonalOS.esc(p.deadline):'No deadline'} • Budget: ${PersonalOS.money(p.budget)}</div>${p.notes?`<p>${PersonalOS.esc(p.notes)}</p>`:''}<div class="os-actions"><button class="btn btn-outline" onclick="window.PersonalOS.bumpProject('${p.id}',10)">+10%</button><button class="btn btn-danger" onclick="window.PersonalOS.deleteRecord('projects','${p.id}','Project')"><i class="fa-solid fa-trash"></i></button></div></div>`}).join('')},
+            bumpProject:async(id,amount)=>{const p=window.SohailPortal.data.projects.find(x=>x.id===id);if(!p)return;const prog=Math.min(100,(Number(p.progress)||0)+amount);try{await setDoc(doc(db,'users',window.SohailPortal.uid,'projects',id),{...p,progress:prog,status:prog>=100?'Completed':'Active'},{merge:true});}catch(e){Toast.show('Project update failed','error')}},
+            saveJournal:async()=>{const uid=window.SohailPortal.uid;if(!uid)return;const date=document.getElementById('journalDate').value||PersonalOS.today();const d={date,mood:document.getElementById('journalMood').value,highlight:document.getElementById('journalHighlight').value.trim(),learned:document.getElementById('journalLearned').value.trim(),notes:document.getElementById('journalNotes').value.trim(),updatedAt:Date.now()};const id=date;try{await setDoc(doc(db,'users',uid,'journal',id),d,{merge:true});Toast.show('Journal entry saved');}catch(e){Toast.show('Journal save failed','error')}},
+            renderJournal:()=>{const list=document.getElementById('journalList');if(!list)return;const a=[...window.SohailPortal.data.journal].sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));if(!a.length){list.innerHTML='<div class="empty-state">No journal entries yet.</div>';return;}list.innerHTML=a.map(j=>`<div class="journal-entry"><h4>${PersonalOS.esc(j.date||'')} • ${PersonalOS.esc(j.mood||'')}</h4>${j.highlight?`<div><strong>Highlight:</strong> ${PersonalOS.esc(j.highlight)}</div>`:''}${j.learned?`<div><strong>Learned:</strong> ${PersonalOS.esc(j.learned)}</div>`:''}${j.notes?`<div style="white-space:pre-wrap;margin-top:.4rem">${PersonalOS.esc(j.notes)}</div>`:''}<div class="os-actions" style="margin-top:.5rem"><button class="btn btn-danger" onclick="window.PersonalOS.deleteRecord('journal','${j.id}','Journal entry')"><i class="fa-solid fa-trash"></i></button></div></div>`).join('')},
+            saveNetWorth:async()=>{const uid=window.SohailPortal.uid;if(!uid)return;const date=document.getElementById('nwDateInput').value||PersonalOS.today();const assets=(Number(document.getElementById('nwCash').value)||0)+(Number(document.getElementById('nwBank').value)||0)+(Number(document.getElementById('nwInvest').value)||0)+(Number(document.getElementById('nwOther').value)||0);const liabilities=Number(document.getElementById('nwDebt').value)||0;const d={date,cash:Number(document.getElementById('nwCash').value)||0,bank:Number(document.getElementById('nwBank').value)||0,investments:Number(document.getElementById('nwInvest').value)||0,otherAssets:Number(document.getElementById('nwOther').value)||0,liabilities,assets,netWorth:assets-liabilities,notes:document.getElementById('nwNotes').value.trim(),createdAt:Date.now()};try{await setDoc(doc(db,'users',uid,'networth',date),d,{merge:true});Toast.show('Financial snapshot saved');}catch(e){Toast.show('Net worth save failed','error')}},
+            renderNetWorth:()=>{const list=document.getElementById('networthList');if(!list)return;const a=[...window.SohailPortal.data.networth].sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));const latest=a[0],prev=a[1];SafeDOM.setHTML('nwLatest',PersonalOS.money(latest?.netWorth||0));SafeDOM.setHTML('nwDate',latest?`As of ${PersonalOS.esc(latest.date)}`:'No snapshot yet');SafeDOM.setHTML('nwAssets',PersonalOS.money(latest?.assets||0));SafeDOM.setHTML('nwLiabilities',PersonalOS.money(latest?.liabilities||0));const change=(latest?.netWorth||0)-(prev?.netWorth||0);SafeDOM.setHTML('nwChange',`${change>=0?'+':''}${PersonalOS.money(change)}`);if(!a.length){list.innerHTML='<div class="empty-state">No financial snapshots yet.</div>';return;}list.innerHTML=`<table class="os-table"><thead><tr><th>Date</th><th>Assets</th><th>Liabilities</th><th>Net Worth</th><th></th></tr></thead><tbody>${a.map(n=>`<tr><td>${PersonalOS.esc(n.date)}</td><td class="money-positive">${PersonalOS.money(n.assets)}</td><td class="money-negative">${PersonalOS.money(n.liabilities)}</td><td><strong>${PersonalOS.money(n.netWorth)}</strong></td><td><button class="btn btn-danger" onclick="window.PersonalOS.deleteRecord('networth','${n.id}','Snapshot')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')}</tbody></table>`},
+            renderExpenseIntel:()=>{const ex=window.SohailPortal.data.expenses||[],now=new Date(),ym=now.toISOString().slice(0,7),month=ex.filter(e=>String(e.date||'').startsWith(ym)),total=month.reduce((s,e)=>s+(Number(e.amount)||0),0),allTotal=ex.reduce((s,e)=>s+(Number(e.amount)||0),0);SafeDOM.setHTML('eiMonth',PersonalOS.money(total));SafeDOM.setHTML('eiAvg',PersonalOS.money(ex.length?allTotal/ex.length:0));const cats={};ex.forEach(e=>{const c=e.category||'Other';cats[c]=(cats[c]||0)+(Number(e.amount)||0)});const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];SafeDOM.setHTML('eiTop',top?PersonalOS.esc(top[0]):'—');SafeDOM.setHTML('eiTopAmt',top?PersonalOS.money(top[1]):'₹0');const recurring=ex.filter(e=>e.recurring===true).reduce((s,e)=>s+(Number(e.amount)||0),0);SafeDOM.setHTML('eiRecurring',PersonalOS.money(recurring));const list=document.getElementById('expenseCategoryList');if(list){const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);list.innerHTML=entries.length?entries.map(([c,v])=>`<div style="display:grid;grid-template-columns:140px 1fr 110px;gap:.7rem;align-items:center;margin:.55rem 0"><span>${PersonalOS.esc(c)}</span><div class="os-progress"><span style="width:${allTotal?Math.min(100,v/allTotal*100):0}%"></span></div><strong style="text-align:right">${PersonalOS.money(v)}</strong></div>`).join(''):'<div class="empty-state">No expenses logged yet.</div>'}}; PersonalOS.renderExpenseTrend();
+
+            renderExpenseTrend:()=>{const canvas=document.getElementById('expenseTrendChart');if(!canvas||typeof Chart==='undefined')return;const months={};(window.SohailPortal.data.expenses||[]).forEach(e=>{const d=String(e.date||'');if(!/^\d{4}-\d{2}/.test(d))return;const k=d.slice(0,7);months[k]=(months[k]||0)+(Number(e.amount)||0)});const keys=Object.keys(months).sort().slice(-6);if(PersonalOS.expenseTrendChart)PersonalOS.expenseTrendChart.destroy();PersonalOS.expenseTrendChart=new Chart(canvas,{type:'line',data:{labels:keys,datasets:[{label:'Expenses',data:keys.map(k=>months[k]||0),borderColor:getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim(),backgroundColor:'transparent',borderWidth:3,tension:.35,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+Number(v).toLocaleString('en-IN')}}},plugins:{legend:{display:false}}}})},
+            renderCalendar:()=>{const grid=document.getElementById('calendarGrid');if(!grid)return;const d=PersonalOS.calendarDate,y=d.getFullYear(),m=d.getMonth();const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),start=first.getDay();SafeDOM.setHTML('calendarMonthLabel',d.toLocaleString('en-IN',{month:'long',year:'numeric'}));let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="cal-head">${x}</div>`).join('');const today=PersonalOS.today();for(let i=0;i<start;i++)h+='<div class="cal-day muted"></div>';for(let day=1;day<=days;day++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const ev=PersonalOS.dayEvents(ds);h+=`<div class="cal-day ${ds===today?'today':''}" onclick="window.PersonalOS.selectCalendarDay('${ds}')"><div class="cal-date">${day}</div>${ev.slice(0,4).map(e=>`<div class="cal-event ${e.type}">${PersonalOS.esc(e.label)}</div>`).join('')}${ev.length>4?`<div class="os-muted">+${ev.length-4} more</div>`:''}</div>`}grid.innerHTML=h},
+            dayEvents:(date)=>{const ev=[];(window.SohailPortal.data.attendance||[]).filter(a=>a.date===date).forEach(a=>ev.push({type:'att',label:`🕘 ${a.login||'Attendance'} ${a.status?'• '+a.status:''}`}));(window.SohailPortal.data.tasks||[]).filter(t=>t.date===date).forEach(t=>ev.push({type:'',label:`📋 ${t.name||'Task'}`}));(window.SohailPortal.data.goals||[]).filter(g=>g.deadline===date).forEach(g=>ev.push({type:'goal',label:`🎯 ${g.title}`}));(window.SohailPortal.data.projects||[]).filter(p=>p.deadline===date).forEach(p=>ev.push({type:'project',label:`🚀 ${p.title}`}));(window.SohailPortal.data.expenses||[]).filter(e=>e.date===date).forEach(e=>ev.push({type:'expense',label:`💰 ${PersonalOS.money(e.amount)} ${e.category||''}`}));(window.SohailPortal.data.ideas||[]).filter(i=>i.date===date).forEach(i=>ev.push({type:'',label:`💡 ${i.title}`}));(window.SohailPortal.data.journal||[]).filter(j=>j.date===date).forEach(j=>ev.push({type:'journal',label:`📖 Journal ${j.mood||''}`}));return ev},
+            selectCalendarDay:(date)=>{const ev=PersonalOS.dayEvents(date);SafeDOM.setHTML('calendarDetails',`<strong>${PersonalOS.esc(date)}</strong><div style="margin-top:.7rem">${ev.length?ev.map(e=>`<div style="padding:.4rem 0;border-bottom:1px solid var(--border-glass)">${PersonalOS.esc(e.label)}</div>`).join(''):'<span class="os-muted">Nothing recorded for this date.</span>'}</div>`)},
+            calendarPrev:()=>{PersonalOS.calendarDate=new Date(PersonalOS.calendarDate.getFullYear(),PersonalOS.calendarDate.getMonth()-1,1);PersonalOS.renderCalendar()},calendarNext:()=>{PersonalOS.calendarDate=new Date(PersonalOS.calendarDate.getFullYear(),PersonalOS.calendarDate.getMonth()+1,1);PersonalOS.renderCalendar()},calendarToday:()=>{const n=new Date();PersonalOS.calendarDate=new Date(n.getFullYear(),n.getMonth(),1);PersonalOS.renderCalendar()},
+            renderRecords:()=>{const att=window.SohailPortal.data.attendance||[],tasks=window.SohailPortal.data.tasks||[],goals=window.SohailPortal.data.goals||[],projects=window.SohailPortal.data.projects||[],ideas=window.SohailPortal.data.ideas||[],journal=window.SohailPortal.data.journal||[];const hours=att.reduce((s,a)=>s+(Number(a.totalMins)||0),0);const longest=att.reduce((a,b)=>(Number(b.totalMins)||0)>(Number(a.totalMins)||0)?b:a,{});const completedTasks=tasks.filter(t=>String(t.status||'').toLowerCase()==='completed').length;const completedGoals=goals.filter(g=>Number(g.progress)>=100||g.status==='Completed').length;const completedProjects=projects.filter(p=>Number(p.progress)>=100||p.status==='Completed').length;const activeDays=new Set(att.map(a=>a.date).filter(Boolean));const totalExp=(window.SohailPortal.data.expenses||[]).reduce((s,e)=>s+(Number(e.amount)||0),0);const records=[['fa-clock','Longest Workday',longest.totalFmt||Core.formatMins(Number(longest.totalMins)||0)],['fa-fire','Work Days Logged',activeDays.size],['fa-list-check','Completed Tasks',completedTasks],['fa-bullseye','Completed Goals',completedGoals],['fa-rocket','Completed Projects',completedProjects],['fa-lightbulb','Ideas Captured',ideas.length],['fa-book','Journal Entries',journal.length],['fa-wallet','Total Expenses',PersonalOS.money(totalExp)]];const grid=document.getElementById('recordsGrid');if(grid)grid.innerHTML=records.map(r=>`<div class="record-card"><div class="icon"><i class="fa-solid ${r[0]}"></i></div><div class="value">${PersonalOS.esc(r[2])}</div><div class="label">${PersonalOS.esc(r[1])}</div></div>`).join('');const sum=document.getElementById('recordsSummary');if(sum)sum.innerHTML=`<div class="os-card"><h3>Total Work Time</h3><div class="os-kpi">${Core.formatMins(hours)}</div></div><div class="os-card"><h3>Goals</h3><div class="os-kpi">${goals.length}</div></div><div class="os-card"><h3>Projects</h3><div class="os-kpi">${projects.length}</div></div><div class="os-card"><h3>Ideas</h3><div class="os-kpi">${ideas.length}</div></div>`},
+            deleteRecord:(collectionName,id,label)=>{window.Modal.open(`Delete ${label}`,`Delete this ${label.toLowerCase()} permanently?`,async()=>{try{await deleteDoc(doc(db,'users',window.SohailPortal.uid,collectionName,id));Toast.show(`${label} deleted`)}catch(e){Toast.show(`Could not delete ${label.toLowerCase()}`,'error')}})},
+            renderAll:()=>{PersonalOS.renderGoals();PersonalOS.renderIdeas();PersonalOS.renderProjects();PersonalOS.renderJournal();PersonalOS.renderNetWorth();PersonalOS.renderExpenseIntel();PersonalOS.renderCalendar();PersonalOS.renderRecords()}
+        };
+
         // --- 13. BACKUP & RESTORE ---
         const Backup = {
             exportJSON: () => {
@@ -1637,6 +1739,11 @@
                         if(data.attendance) data.attendance.forEach(a => setDoc(doc(db, "users", uid, "attendance_v2", a.id), a));
                         if(data.salaries) data.salaries.forEach(s => setDoc(doc(db, "users", uid, "salaries", s.id), s));
                         if(data.expenses) data.expenses.forEach(x => setDoc(doc(db, "users", uid, "expenses", x.id), x));
+                        if(data.goals) data.goals.forEach(x => setDoc(doc(db, "users", uid, "goals", x.id), x));
+                        if(data.ideas) data.ideas.forEach(x => setDoc(doc(db, "users", uid, "ideas", x.id), x));
+                        if(data.projects) data.projects.forEach(x => setDoc(doc(db, "users", uid, "projects", x.id), x));
+                        if(data.journal) data.journal.forEach(x => setDoc(doc(db, "users", uid, "journal", x.id), x));
+                        if(data.networth) data.networth.forEach(x => setDoc(doc(db, "users", uid, "networth", x.id), x));
                         if(data.settings) await setDoc(doc(db, "users", uid, "profile", "settings"), data.settings, { merge: true });
                         Toast.show("System Restored Successfully! Cloud Syncing...");
                     } catch(err) { Toast.show("Invalid Backup File format", "error"); }
@@ -1699,10 +1806,10 @@
 
         // --- 16. EXPOSE TO WINDOW FOR GLOBAL BINDINGS ---
         window.UI = UI; window.Theme = Theme; window.Profile = Profile; window.Tasks = Tasks; window.Attendance = Attendance; 
-        window.Finance = Finance; window.Backup = Backup; window.Exporter = Exporter; window.Timer = Timer; window.Modal = Modal; window.Analytics = Analytics; window.Auth = Auth;
+        window.Finance = Finance; window.PersonalOS = PersonalOS; window.Backup = Backup; window.Exporter = Exporter; window.Timer = Timer; window.Modal = Modal; window.Analytics = Analytics; window.Auth = Auth;
 
         // BOOTSTRAP
-        UI.init(); Attendance.toggleFields();
+        UI.init(); Attendance.toggleFields(); PersonalOS.renderAll(); ['journalDate','nwDateInput'].forEach(id=>SafeDOM.setValue(id,PersonalOS.today()));
         document.getElementById('confirmModal').addEventListener('click', (e) => { if(e.target === document.getElementById('confirmModal')) window.Modal.close(); });
     </script>
 </body>
