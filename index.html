@@ -1832,6 +1832,26 @@
         // BOOTSTRAP
         UI.init(); Attendance.toggleFields(); PersonalOS.renderAll(); ['journalDate','nwDateInput'].forEach(id=>SafeDOM.setValue(id,PersonalOS.today()));
         document.getElementById('confirmModal').addEventListener('click', (e) => { if(e.target === document.getElementById('confirmModal')) window.Modal.close(); });
+        // Global confirmation handler: all delete actions use Modal.open(..., callback).
+        // Keep the callback execution here so every module gets the same reliable delete flow.
+        document.getElementById('confirmBtn').addEventListener('click', async () => {
+            const action = window.Modal.confirmAction;
+            if (typeof action !== 'function') return window.Modal.close();
+            const btn = document.getElementById('confirmBtn');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+            try {
+                await action();
+                window.Modal.close();
+            } catch (e) {
+                console.error('Confirmation action failed:', e);
+                Toast.show(e?.message || 'Operation failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        });
     </script>
 </body>
 </html>
