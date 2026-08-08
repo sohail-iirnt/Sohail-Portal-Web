@@ -657,7 +657,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // FIREBASE INITIALIZATION
         const firebaseConfig = {
@@ -757,58 +757,115 @@
         };
 
         // --- 4. FIREBASE REAL-TIME SYNC ENGINE ---
+        // Robust Firestore synchronization. Each listener has its own error handler,
+        // and a render failure can never be reported as a Firebase write failure.
         function initRealtimeSync() {
             const uid = window.SohailPortal.uid;
-            
-            const unsubSettings = onSnapshot(doc(db, "users", uid, "profile", "settings"), (docSnap) => {
-                if(docSnap.exists()) {
-                    const d = docSnap.data(); window.SohailPortal.data.settings = d;
-                    
-                    if(d.theme && d.theme.p !== getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()) {
-                        window.Theme.apply(d.theme.p, d.theme.s, d.theme.g);
-                        document.querySelectorAll('.theme-dots .dot').forEach(dot => dot.classList.remove('active'));
-                        const activeDot = document.querySelector(`.theme-dots .dot[data-theme="${d.theme.id}"]`);
-                        if(activeDot) activeDot.classList.add('active');
-                    }
-                    if(d.doj) { const dojEl = document.getElementById('dojInput'); if(dojEl && dojEl.value !== d.doj) { if(dojEl._flatpickr) dojEl._flatpickr.setDate(d.doj); window.Profile.calc(d.doj); } }
-                    if(d.dailyRate) { const drEl = document.getElementById('dailyRateInput'); if(drEl && drEl.value !== d.dailyRate) { drEl.value = d.dailyRate; window.Attendance.render(); } }
-                    if(d.notes && document.activeElement !== document.getElementById('devNotes')) { SafeDOM.setValue('devNotes', d.notes); }
-                    if(d.timerLogin) { const tLog = document.getElementById('loginTimeInput'); if(tLog && tLog.value !== d.timerLogin) { if(tLog._flatpickr) tLog._flatpickr.setDate(d.timerLogin); window.Timer.start(false); } }
-                }
+            if (!uid) return;
+
+            // Prevent duplicate listeners when auth state changes/reconnects.
+            window.SohailPortal.unsubscribes.forEach(unsub => {
+                try { if (typeof unsub === 'function') unsub(); } catch (_) {}
             });
+            window.SohailPortal.unsubscribes = [];
+
+            const safeRender = (name, fn) => {
+                try {
+                    if (typeof fn === 'function') fn();
+                } catch (err) {
+                    console.error(`${name} render error:`, err);
+                }
+            };
+
+            const unsubSettings = onSnapshot(
+                doc(db, "users", uid, "profile", "settings"),
+                (docSnap) => {
+                    try {
+                        if (!docSnap.exists()) return;
+                        const d = docSnap.data() || {};
+                        window.SohailPortal.data.settings = d;
+
+                        if (d.theme && d.theme.p && d.theme.p !== getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()) {
+                            window.Theme.apply(d.theme.p, d.theme.s || '#0057ff', d.theme.g || 'rgba(0,240,255,0.3)');
+                            document.querySelectorAll('.theme-dots .dot').forEach(dot => dot.classList.remove('active'));
+                            const activeDot = document.querySelector(`.theme-dots .dot[data-theme="${d.theme.id || ''}"]`);
+                            if (activeDot) activeDot.classList.add('active');
+                        }
+
+                        if (d.doj) {
+                            const dojEl = document.getElementById('dojInput');
+                            if (dojEl && dojEl.value !== d.doj) {
+                                if (dojEl._flatpickr) dojEl._flatpickr.setDate(d.doj, false);
+                                else dojEl.value = d.doj;
+                                if (window.Profile) window.Profile.calc(d.doj);
+                            }
+                        }
+
+                        if (d.dailyRate !== undefined && d.dailyRate !== null) {
+                            const drEl = document.getElementById('dailyRateInput');
+                            if (drEl && String(drEl.value) !== String(d.dailyRate)) drEl.value = d.dailyRate;
+                            safeRender('Attendance settings', () => window.Attendance && window.Attendance.render());
+                        }
+
+                        if (d.notes !== undefined && document.activeElement !== document.getElementById('devNotes')) {
+                            SafeDOM.setValue('devNotes', d.notes || '');
+                        }
+
+                        if (d.timerLogin) {
+                            const tLog = document.getElementById('loginTimeInput');
+                            if (tLog && tLog.value !== d.timerLogin) {
+                                if (tLog._flatpickr) tLog._flatpickr.setDate(d.timerLogin, false);
+                                else tLog.value = d.timerLogin;
+                                if (window.Timer) window.Timer.start(false);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Settings snapshot error:', err);
+                    }
+                },
+                (error) => {
+                    console.error('Settings sync error:', error);
+                    Toast.show('Settings sync error: ' + (error.message || error.code || 'Unknown error'), 'error');
+                }
+            );
             window.SohailPortal.unsubscribes.push(unsubSettings);
 
-            function syncCollection(colName, stateArray, renderFn) {
-                const unsub = onSnapshot(collection(db, "users", uid, colName), (snapshot) => {
-                    window.SohailPortal.data[stateArray] = [];
-                    snapshot.forEach(d => window.SohailPortal.data[stateArray].push({ id: d.id, ...d.data() }));
-                    renderFn();
-                    if(document.getElementById('analytics').classList.contains('active')) window.Analytics.render();
-                });
+            function syncCollection(colName, stateArray, renderFn, label) {
+                const unsub = onSnapshot(
+                    collection(db, "users", uid, colName),
+                    (snapshot) => {
+                        try {
+                            const rows = [];
+                            snapshot.forEach(snap => {
+                                const data = snap.data() || {};
+                                rows.push({ id: snap.id, ...data });
+                            });
+
+                            window.SohailPortal.data[stateArray] = rows;
+                            console.log(`[Firestore] ${label}: ${rows.length} record(s) synced`);
+                            safeRender(label, renderFn);
+
+                            const analyticsEl = document.getElementById('analytics');
+                            if (analyticsEl && analyticsEl.classList.contains('active')) {
+                                safeRender('Analytics', () => window.Analytics && window.Analytics.render());
+                            }
+                        } catch (err) {
+                            console.error(`${label} snapshot processing error:`, err);
+                        }
+                    },
+                    (error) => {
+                        console.error(`${label} Firestore listener error:`, error);
+                        Toast.show(`${label} sync error: ${error.message || error.code || 'Unknown error'}`, 'error');
+                    }
+                );
                 window.SohailPortal.unsubscribes.push(unsub);
             }
 
-            syncCollection("tasks", "tasks", () => window.Tasks.render());
-            syncCollection("attendance_v2", "attendance", () => window.Attendance.render()); // NEW CLEAN DATABASE COLLECTION
-            syncCollection("salaries", "salaries", () => window.Finance.render());
-            syncCollection("expenses", "expenses", () => window.Finance.render());
+            syncCollection("tasks", "tasks", () => window.Tasks && window.Tasks.render(), 'Tasks');
+            syncCollection("attendance_v2", "attendance", () => window.Attendance && window.Attendance.render(), 'Attendance');
+            syncCollection("salaries", "salaries", () => window.Finance && window.Finance.render(), 'Salaries');
+            syncCollection("expenses", "expenses", () => window.Finance && window.Finance.render(), 'Expenses');
         }
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.SohailPortal.uid = user.uid;
-                SafeDOM.setDisplay('authOverlay', 'none');
-                SafeDOM.setDisplay('mainApp', 'flex'); 
-                initRealtimeSync();
-                Toast.show("Connected to Firebase Cloud");
-            } else {
-                window.SohailPortal.uid = null;
-                SafeDOM.setDisplay('authOverlay', 'flex');
-                SafeDOM.setDisplay('mainApp', 'none');
-                window.SohailPortal.unsubscribes.forEach(unsub => unsub()); 
-                window.SohailPortal.unsubscribes = [];
-            }
-        });
 
         // --- 5. THEME CONTROLLER ---
         const Theme = {
@@ -849,8 +906,9 @@
             switchTab: (tabId) => {
                 document.querySelectorAll('.module-section').forEach(s => s.classList.remove('active'));
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(tabId).classList.add('active');
-                event.currentTarget.classList.add('active');
+                const section = document.getElementById(tabId);
+                if (section) section.classList.add('active');
+                if (window.event && window.event.currentTarget) window.event.currentTarget.classList.add('active');
                 if(window.innerWidth <= 900) UI.toggleSidebar();
                 if(tabId === 'analytics') window.Analytics.render();
             }
@@ -987,128 +1045,374 @@
             }); }
         };
 
-        // --- 10. ATTENDANCE MODULE (Strict Engine on NEW Collection) ---
+        // --- 10. ATTENDANCE MODULE (Robust Firestore Engine) ---
         const Attendance = {
-            page: 1, limit: 10,
+            page: 1,
+            limit: 10,
+            collection: 'attendance_v2',
+
             toggleFields: () => {
-                const type = document.getElementById('attLogType').value;
+                const typeEl = document.getElementById('attLogType');
+                const type = typeEl ? typeEl.value : 'work';
                 SafeDOM.setDisplay('attLoginGroup', type === 'work' ? 'flex' : 'none');
                 SafeDOM.setDisplay('attLogoutGroup', type === 'work' ? 'flex' : 'none');
                 SafeDOM.setDisplay('attRemarkGroup', type === 'leave' ? 'flex' : 'none');
             },
-            saveRate: () => { updateSetting('dailyRate', document.getElementById('dailyRateInput').value); },
-            save: async () => {
-                const uid = window.SohailPortal.uid; if(!uid) return;
-                const dateEl = document.getElementById('attDate').value;
-                const type = document.getElementById('attLogType').value;
-                if(!dateEl) return Toast.show("Date required", "error");
 
-                let login = "-", logout = "-", totalMins = 0, status = "", cls = "", remark = "", wMins = 0, sMins = 0;
+            saveRate: async () => {
+                const uid = window.SohailPortal.uid;
+                const el = document.getElementById('dailyRateInput');
+                if (!uid || !el) return;
+                try {
+                    await setDoc(
+                        doc(db, "users", uid, "profile", "settings"),
+                        { dailyRate: el.value },
+                        { merge: true }
+                    );
+                } catch (e) {
+                    console.error('Daily rate sync error:', e);
+                }
+            },
+
+            getDocId: (date, editId = '') => {
+                // Keep the existing document ID convention so existing attendance_v2
+                // records remain compatible. One attendance record per date.
+                return String(editId || date || '').trim().replace(/\//g, '-');
+            },
+
+            buildRecord: () => {
+                const dateEl = document.getElementById('attDate');
+                const typeEl = document.getElementById('attLogType');
+                const loginEl = document.getElementById('attLogin');
+                const logoutEl = document.getElementById('attLogout');
+                const remarkEl = document.getElementById('attRemark');
+
+                const date = dateEl ? dateEl.value.trim() : '';
+                const type = typeEl ? typeEl.value : 'work';
+                if (!date) throw new Error('Date required');
+
+                let login = '-';
+                let logout = '-';
+                let totalMins = 0;
+                let status = '';
+                let cls = '';
+                let remark = '';
+                let wastedMins = 0;
+                let shortfallMins = 0;
 
                 if (type === 'work') {
-                    login = document.getElementById('attLogin').value; logout = document.getElementById('attLogout').value;
-                    if(!login || !logout) return Toast.show("Login and Logout required", "error");
-                    let lIn = Core.parseMins(login), lOut = Core.parseMins(logout);
-                    if(lOut < lIn) lOut += 1440; // Overnight
-                    totalMins = lOut - lIn;
-                    
-                    if (totalMins >= 520) { status = "P"; cls = "p"; }
-                    else if (totalMins >= 270) { status = "Half Day"; cls = "hd"; wMins = totalMins - 270; sMins = 520 - totalMins; }
-                    else { status = "Absent"; cls = "a"; }
-                } else if (type === 'sunday') { login = "09:00"; logout = "18:00"; totalMins = 540; status = "Sunday (P)"; cls = "p"; remark = "Work Off";
-                } else if (type === 'leave') { status = "Leave (A)"; cls = "a"; remark = document.getElementById('attRemark').value.trim() || 'Leave'; }
+                    login = loginEl ? loginEl.value.trim() : '';
+                    logout = logoutEl ? logoutEl.value.trim() : '';
+                    if (!login || !logout) throw new Error('Login and Logout required');
 
-                const a = {
-                    date: dateEl, login, logout, totalMins: Number(totalMins) || 0, totalFmt: totalMins > 0 ? Core.formatMins(totalMins) : '-',
-                    status, class: cls, remark, wastedMins: Number(wMins) || 0, shortfallMins: Number(sMins) || 0
+                    const lIn = Core.parseMins(login);
+                    let lOut = Core.parseMins(logout);
+                    if (lOut < lIn) lOut += 1440;
+                    totalMins = Math.max(0, lOut - lIn);
+
+                    if (totalMins >= 520) {
+                        status = 'P';
+                        cls = 'p';
+                    } else if (totalMins >= 270) {
+                        status = 'Half Day';
+                        cls = 'hd';
+                        wastedMins = Math.max(0, totalMins - 270);
+                        shortfallMins = Math.max(0, 520 - totalMins);
+                    } else {
+                        status = 'Absent';
+                        cls = 'a';
+                    }
+                } else if (type === 'sunday') {
+                    login = '09:00';
+                    logout = '18:00';
+                    totalMins = 540;
+                    status = 'Sunday (P)';
+                    cls = 'p';
+                    remark = 'Work Off';
+                } else if (type === 'leave') {
+                    status = 'Leave (A)';
+                    cls = 'a';
+                    remark = remarkEl ? remarkEl.value.trim() : '';
+                    if (!remark) remark = 'Leave';
+                } else {
+                    throw new Error('Invalid attendance type');
+                }
+
+                return {
+                    date,
+                    type,
+                    login,
+                    logout,
+                    totalMins: Number(totalMins) || 0,
+                    totalFmt: totalMins > 0 ? Core.formatMins(totalMins) : '-',
+                    status,
+                    class: cls,
+                    remark,
+                    wastedMins: Number(wastedMins) || 0,
+                    shortfallMins: Number(shortfallMins) || 0,
+                    updatedAt: serverTimestamp(),
+                    updatedAtClient: Date.now()
                 };
-
-                const editId = document.getElementById('editAttId').value;
-                const docId = (editId || dateEl).replace(/\//g, '-'); // Sanitize ID for Firebase
-                try { await setDoc(doc(db, "users", uid, "attendance_v2", docId), a, { merge: true }); window.Attendance.cancelEdit(); Toast.show("Attendance Synced"); } 
-                catch(e) { Toast.show("Sync Error: " + e.message, "error"); }
             },
+
+            save: async () => {
+                const uid = window.SohailPortal.uid;
+                if (!uid) return Toast.show('Please sign in first', 'error');
+
+                const btn = document.getElementById('saveAttBtn');
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                }
+
+                let record;
+                let docId;
+                try {
+                    record = Attendance.buildRecord();
+                    const editIdEl = document.getElementById('editAttId');
+                    const editId = editIdEl ? editIdEl.value.trim() : '';
+                    docId = Attendance.getDocId(record.date, editId);
+                    if (!docId) throw new Error('Invalid attendance document ID');
+
+                    const ref = doc(db, "users", uid, Attendance.collection, docId);
+
+                    // IMPORTANT: Only the Firestore write is inside this try block.
+                    // UI reset/render errors can no longer be reported as sync errors.
+                    await setDoc(ref, record, { merge: true });
+
+                    // Optimistically update local state so the table appears immediately,
+                    // even before the snapshot callback reaches the browser.
+                    const cleanRecord = {
+                        ...record,
+                        id: docId,
+                        updatedAt: null
+                    };
+                    const existingIndex = window.SohailPortal.data.attendance.findIndex(x => x.id === docId);
+                    if (existingIndex >= 0) {
+                        window.SohailPortal.data.attendance[existingIndex] = cleanRecord;
+                    } else {
+                        window.SohailPortal.data.attendance.push(cleanRecord);
+                    }
+                    window.SohailPortal.data.attendance = window.SohailPortal.data.attendance.filter(Boolean);
+
+                    // Render independently from Firestore success.
+                    try { Attendance.render(); } catch (renderError) { console.error('Post-save render error:', renderError); }
+
+                    Toast.show('Attendance saved to Firebase', 'success');
+
+                    // Reset independently from Firebase success.
+                    try { Attendance.cancelEdit(); } catch (resetError) { console.error('Attendance reset error:', resetError); }
+                } catch (e) {
+                    console.error('Attendance Firestore save error:', e);
+                    const message = e && e.message ? e.message : 'Unknown Firebase error';
+                    Toast.show('Attendance save failed: ' + message, 'error');
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml || '<i class="fa-solid fa-cloud-arrow-up"></i> Sync Attendance';
+                    }
+                }
+            },
+
             render: () => {
                 try {
-                    const filterMonth = document.getElementById('attMonthFilter').value;
-                    const query = document.getElementById('attSearch').value.toLowerCase();
-                    
-                    let filtered = window.SohailPortal.data.attendance.map(x=>({...x})); // Strict shallow clone
-                    
-                    if(filterMonth) filtered = filtered.filter(a => (a.date||"").startsWith(filterMonth));
-                    if(query) filtered = filtered.filter(a => (a.date||"").includes(query) || (a.status||"").toLowerCase().includes(query));
-                    filtered.sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+                    const monthEl = document.getElementById('attMonthFilter');
+                    const searchEl = document.getElementById('attSearch');
+                    const rateEl = document.getElementById('dailyRateInput');
+                    const tbody = document.getElementById('attTableBody');
 
-                    let p=0, hd=0, a=0, mins=0, tWasted=0;
+                    // The table may not exist while the module is booting; never throw.
+                    if (!tbody) return;
+
+                    const filterMonth = monthEl ? String(monthEl.value || '').trim() : '';
+                    const query = searchEl ? String(searchEl.value || '').trim().toLowerCase() : '';
+
+                    const source = Array.isArray(window.SohailPortal?.data?.attendance)
+                        ? window.SohailPortal.data.attendance
+                        : [];
+
+                    let filtered = source
+                        .filter(item => item && typeof item === 'object')
+                        .map(item => ({ ...item }));
+
+                    if (filterMonth) {
+                        filtered = filtered.filter(item => String(item.date || '').startsWith(filterMonth));
+                    }
+
+                    if (query) {
+                        filtered = filtered.filter(item => {
+                            const date = String(item.date || '').toLowerCase();
+                            const status = String(item.status || '').toLowerCase();
+                            const remark = String(item.remark || '').toLowerCase();
+                            return date.includes(query) || status.includes(query) || remark.includes(query);
+                        });
+                    }
+
+                    filtered.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+                    let fullDays = 0;
+                    let halfDays = 0;
+                    let absentDays = 0;
+                    let mins = 0;
+                    let totalWasted = 0;
+
                     filtered.forEach(item => {
-                        const statusStr = item.status || "";
-                        if(statusStr.includes("P")) p++; else if(statusStr === "Half Day") hd++; else a++;
-                        mins += (Number(item.totalMins) || 0); tWasted += (Number(item.wastedMins) || 0);
+                        const status = String(item.status || '');
+                        if (status.includes('P')) fullDays++;
+                        else if (status === 'Half Day') halfDays++;
+                        else absentDays++;
+                        mins += Number(item.totalMins) || 0;
+                        totalWasted += Number(item.wastedMins) || 0;
                     });
 
-                    Core.animateValue(document.getElementById('statP'), 0, p, 500);
-                    Core.animateValue(document.getElementById('statHD'), 0, hd, 500);
-                    Core.animateValue(document.getElementById('statA'), 0, a, 500);
-                    
-                    const equivDays = (mins/540).toFixed(1);
+                    Core.animateValue(document.getElementById('statP'), 0, fullDays, 350);
+                    Core.animateValue(document.getElementById('statHD'), 0, halfDays, 350);
+                    Core.animateValue(document.getElementById('statA'), 0, absentDays, 350);
+
+                    const equivDays = (mins / 540).toFixed(1);
                     SafeDOM.setHTML('statConverted', equivDays);
                     SafeDOM.setHTML('sidebarEquiv', `${equivDays} Days Earned (9h/D)`);
-                    SafeDOM.setHTML('statWasted', Core.formatMins(tWasted));
 
-                    const rate = parseFloat(document.getElementById('dailyRateInput').value) || 0;
-                    SafeDOM.setHTML('statEarnings', `₹${Core.formatNumber((p * rate) + (hd * (rate / 2)))}`);
+                    // statWasted existed in older JS but not in the HTML. SafeDOM handles
+                    // the missing element; this line is retained for compatibility.
+                    SafeDOM.setHTML('statWasted', Core.formatMins(totalWasted));
 
-                    const totalPages = Math.ceil(filtered.length / Attendance.limit) || 1;
-                    if(Attendance.page > totalPages) Attendance.page = totalPages;
+                    const rate = rateEl ? parseFloat(rateEl.value) || 0 : 0;
+                    SafeDOM.setHTML('statEarnings', `₹${Core.formatNumber((fullDays * rate) + (halfDays * (rate / 2)))}`);
+
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / Attendance.limit));
+                    if (Attendance.page > totalPages) Attendance.page = totalPages;
+                    if (Attendance.page < 1) Attendance.page = 1;
+
                     const start = (Attendance.page - 1) * Attendance.limit;
                     const paginated = filtered.slice(start, start + Attendance.limit);
 
-                    const tbody = document.getElementById('attTableBody'); if(!tbody) return;
                     tbody.innerHTML = '';
-                    if(paginated.length === 0) { tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No attendance records found.</td></tr>"; }
 
-                    paginated.forEach(item => {
-                        let details = item.remark || '-';
-                        if(item.status === 'Half Day') { details = `<span class="text-warning-sm">Wasted: ${Core.formatMins(item.wastedMins||0)}</span><span class="text-danger-sm">Shortfall: ${Core.formatMins(item.shortfallMins||0)}</span>`; }
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td style="font-family:var(--font-code); font-size:0.8rem;">${item.date||'-'}</td>
-                            <td>${item.login||'-'}</td><td>${item.logout||'-'}</td>
-                            <td style="color:var(--accent-primary); font-weight:600;">${item.totalFmt||'-'}</td>
-                            <td><span class="badge ${item.class||'todo'}">${item.status||'Unknown'}</span></td>
-                            <td>${details}</td>
-                            <td style="text-align:right;">
-                                <i class="fa-solid fa-pen action-icon" onclick="window.Attendance.edit('${item.id}')"></i>
-                                <i class="fa-solid fa-trash action-icon delete" onclick="window.Attendance.reqDel('${item.id}')"></i>
-                            </td>`;
-                        tbody.appendChild(tr);
-                    });
+                    if (paginated.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No attendance records found.</td></tr>`;
+                    } else {
+                        paginated.forEach(item => {
+                            const details = item.status === 'Half Day'
+                                ? `<span class="text-warning-sm">Wasted: ${Core.formatMins(Number(item.wastedMins) || 0)}</span><span class="text-danger-sm">Shortfall: ${Core.formatMins(Number(item.shortfallMins) || 0)}</span>`
+                                : String(item.remark || '-');
 
-                    SafeDOM.setHTML('attPageInfo', `Showing ${filtered.length > 0 ? start+1 : 0}-${Math.min(start + Attendance.limit, filtered.length)} of ${filtered.length}`);
-                    document.getElementById('attPrevBtn').disabled = Attendance.page === 1; document.getElementById('attNextBtn').disabled = Attendance.page === totalPages;
-                } catch(e) { console.error("Attendance Render Error:", e); }
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td style="font-family:var(--font-code); font-size:0.8rem;">${String(item.date || '-')}</td>
+                                <td>${String(item.login || '-')}</td>
+                                <td>${String(item.logout || '-')}</td>
+                                <td style="color:var(--accent-primary); font-weight:600;">${String(item.totalFmt || '-')}</td>
+                                <td><span class="badge ${String(item.class || 'todo')}">${String(item.status || 'Unknown')}</span></td>
+                                <td>${details}</td>
+                                <td style="text-align:right;">
+                                    <i class="fa-solid fa-pen action-icon" title="Edit" onclick="window.Attendance.edit('${String(item.id || '')}')"></i>
+                                    <i class="fa-solid fa-trash action-icon delete" title="Delete" onclick="window.Attendance.reqDel('${String(item.id || '')}')"></i>
+                                </td>`;
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    SafeDOM.setHTML('attPageInfo', `Showing ${filtered.length ? start + 1 : 0}-${Math.min(start + Attendance.limit, filtered.length)} of ${filtered.length}`);
+
+                    const prev = document.getElementById('attPrevBtn');
+                    const next = document.getElementById('attNextBtn');
+                    if (prev) prev.disabled = Attendance.page <= 1;
+                    if (next) next.disabled = Attendance.page >= totalPages;
+                } catch (e) {
+                    console.error('Attendance Render Error:', e);
+                    const tbody = document.getElementById('attTableBody');
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--danger);">Unable to render attendance records. Check browser console.</td></tr>`;
+                }
             },
-            prevPage: () => { if(Attendance.page > 1) { Attendance.page--; Attendance.render(); } }, nextPage: () => { Attendance.page++; Attendance.render(); },
-            clearFilter: () => { SafeDOM.clearInput('attMonthFilter'); SafeDOM.setValue('attSearch', ''); Attendance.render(); Toast.show("Filters Reset"); },
+
+            prevPage: () => {
+                if (Attendance.page > 1) {
+                    Attendance.page--;
+                    Attendance.render();
+                }
+            },
+
+            nextPage: () => {
+                const count = Array.isArray(window.SohailPortal?.data?.attendance) ? window.SohailPortal.data.attendance.length : 0;
+                const totalPages = Math.max(1, Math.ceil(count / Attendance.limit));
+                if (Attendance.page < totalPages) {
+                    Attendance.page++;
+                    Attendance.render();
+                }
+            },
+
+            clearFilter: () => {
+                SafeDOM.clearInput('attMonthFilter');
+                SafeDOM.setValue('attSearch', '');
+                Attendance.page = 1;
+                Attendance.render();
+                Toast.show('Filters Reset');
+            },
+
             edit: (id) => {
-                const a = window.SohailPortal.data.attendance.find(x => x.id === id); if(!a) return;
-                SafeDOM.setValue('editAttId', a.id);
-                const dIn = document.getElementById('attDate'); if(dIn && dIn._flatpickr) dIn._flatpickr.setDate(a.date);
-                const lIn = document.getElementById('attLogin'); if(lIn && lIn._flatpickr) lIn._flatpickr.setDate(a.login);
-                const oIn = document.getElementById('attLogout'); if(oIn && oIn._flatpickr) oIn._flatpickr.setDate(a.logout);
-                
-                SafeDOM.setHTML('saveAttBtn', "<i class='fa-solid fa-cloud-arrow-up'></i> Update Record"); 
-                SafeDOM.setDisplay('cancelAttEditBtn', 'inline-flex'); SafeDOM.setHTML('attFormTitle', "<i class='fa-solid fa-pen'></i> Editing Entry"); document.getElementById('mainContent').scrollTo(0,0);
+                const rows = Array.isArray(window.SohailPortal?.data?.attendance) ? window.SohailPortal.data.attendance : [];
+                const a = rows.find(x => x && x.id === id);
+                if (!a) return Toast.show('Attendance record not found', 'error');
+
+                SafeDOM.setValue('editAttId', a.id || '');
+                SafeDOM.setValue('attLogType', a.type || (String(a.status || '').includes('Leave') ? 'leave' : String(a.status || '').includes('Sunday') ? 'sunday' : 'work'));
+                SafeDOM.setValue('attRemark', a.remark || '');
+
+                const dIn = document.getElementById('attDate');
+                const lIn = document.getElementById('attLogin');
+                const oIn = document.getElementById('attLogout');
+
+                if (dIn && dIn._flatpickr) dIn._flatpickr.setDate(a.date || '', false);
+                else if (dIn) dIn.value = a.date || '';
+                if (lIn && lIn._flatpickr && a.login && a.login !== '-') lIn._flatpickr.setDate(a.login, false);
+                else if (lIn) lIn.value = a.login && a.login !== '-' ? a.login : '';
+                if (oIn && oIn._flatpickr && a.logout && a.logout !== '-') oIn._flatpickr.setDate(a.logout, false);
+                else if (oIn) oIn.value = a.logout && a.logout !== '-' ? a.logout : '';
+
+                Attendance.toggleFields();
+                SafeDOM.setHTML('saveAttBtn', '<i class="fa-solid fa-cloud-arrow-up"></i> Update Record');
+                SafeDOM.setDisplay('cancelAttEditBtn', 'inline-flex');
+                SafeDOM.setHTML('attFormTitle', '<i class="fa-solid fa-pen"></i> Editing Entry');
+
+                const main = document.getElementById('mainContent');
+                if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
             },
+
             cancelEdit: () => {
-                SafeDOM.setValue('editAttId', ''); SafeDOM.clearInput('attLogin'); SafeDOM.clearInput('attLogout');
-                SafeDOM.setValue('attRemark', ''); SafeDOM.setValue('attLogType', 'work'); Attendance.toggleFields();
-                SafeDOM.setHTML('saveAttBtn', "<i class='fa-solid fa-cloud-arrow-up'></i> Sync Attendance");
-                SafeDOM.setDisplay('cancelAttEditBtn', 'none'); SafeDOM.setHTML('attFormTitle', "<i class='fa-solid fa-plus'></i> Log Attendance Entry");
+                SafeDOM.setValue('editAttId', '');
+                SafeDOM.clearInput('attDate');
+                SafeDOM.clearInput('attLogin');
+                SafeDOM.clearInput('attLogout');
+                SafeDOM.setValue('attRemark', '');
+                SafeDOM.setValue('attLogType', 'work');
+                Attendance.toggleFields();
+                SafeDOM.setHTML('saveAttBtn', '<i class="fa-solid fa-cloud-arrow-up"></i> Sync Attendance');
+                SafeDOM.setDisplay('cancelAttEditBtn', 'none');
+                SafeDOM.setHTML('attFormTitle', '<i class="fa-solid fa-plus"></i> Log Attendance Entry');
+
+                // Restore today's date after clearing edit mode.
+                const dateEl = document.getElementById('attDate');
+                if (dateEl && dateEl._flatpickr) dateEl._flatpickr.setDate(new Date(), true);
             },
-            reqDel: (id) => { window.Modal.open("Delete Record", "Delete this attendance record permanently?", async () => { 
-                try { await deleteDoc(doc(db, "users", window.SohailPortal.uid, "attendance_v2", id)); Toast.show("Deleted"); } catch(e) {}
-            }); }
+
+            reqDel: (id) => {
+                if (!id) return Toast.show('Invalid attendance record', 'error');
+                window.Modal.open('Delete Record', 'Delete this attendance record permanently?', async () => {
+                    const uid = window.SohailPortal.uid;
+                    if (!uid) return;
+                    try {
+                        await deleteDoc(doc(db, "users", uid, Attendance.collection, id));
+                        window.SohailPortal.data.attendance = window.SohailPortal.data.attendance.filter(x => x && x.id !== id);
+                        Attendance.render();
+                        Toast.show('Attendance record deleted');
+                    } catch (e) {
+                        console.error('Attendance delete error:', e);
+                        Toast.show('Delete failed: ' + (e.message || 'Unknown error'), 'error');
+                    }
+                });
+            }
         };
 
         // --- 11. FINANCE MODULE ---
@@ -1271,16 +1575,20 @@
 
         // --- 15. SCRATCHPAD (DEBOUNCED SYNC) ---
         let noteTimeout;
-        document.getElementById('devNotes').addEventListener('input', (e) => {
-            clearTimeout(noteTimeout); noteTimeout = setTimeout(() => { updateSetting('notes', e.target.value); }, 800);
-        });
+        const devNotesEl = document.getElementById('devNotes');
+        if (devNotesEl) {
+            devNotesEl.addEventListener('input', (e) => {
+                clearTimeout(noteTimeout);
+                noteTimeout = setTimeout(() => { updateSetting('notes', e.target.value); }, 800);
+            });
+        }
 
         // --- 16. EXPOSE TO WINDOW FOR GLOBAL BINDINGS ---
         window.UI = UI; window.Theme = Theme; window.Profile = Profile; window.Tasks = Tasks; window.Attendance = Attendance; 
         window.Finance = Finance; window.Backup = Backup; window.Exporter = Exporter; window.Timer = Timer; window.Modal = Modal; window.Analytics = Analytics; window.Auth = Auth;
 
         // BOOTSTRAP
-        UI.init(); Theme.init();
+        UI.init(); Attendance.toggleFields();
         document.getElementById('confirmModal').addEventListener('click', (e) => { if(e.target === document.getElementById('confirmModal')) window.Modal.close(); });
     </script>
 </body>
